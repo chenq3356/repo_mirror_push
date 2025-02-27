@@ -39,7 +39,10 @@ bool parseParameter()
         return false;
     }
     s_upload        = reader.GetBoolean("UploadInfo", "upload", false);
+    s_commitAgain   = reader.GetBoolean("UploadInfo", "commitAgain", false);
     s_basePath      = reader.GetString("UploadInfo", "basePath", "");
+    s_manifestsPath = reader.GetString("UploadInfo", "manifestsPath", "");
+    s_repoPath      = reader.GetString("UploadInfo", "repoPath", "");
     s_projectUrl    = reader.GetString("UploadInfo", "projectUrl", "");
     s_apiToken      = reader.GetString("UploadInfo", "apiToken", "");
     s_namespaceName = reader.GetString("UploadInfo", "namespaceName", "");
