@@ -31,7 +31,7 @@ baseFile=xxx.xml                        ;预提交仓库的XML文件
 
 > `XMLInfo.baseFile`: 预提交仓库的XML文件推荐使用命令`.repo/repo/repo manifest -m xxx.xml -o xxx.xml`生成的文件，而不是直接使用manifests下的文件。
 
-> `apiToken`: gitlab个人账户授权的`apitoken`,通过点击右上角【用户头像】->选择【Edit profile】 ->菜单中选择【 访问令牌】，右侧 进行创建，建议给予全部权限
+> `apiToken`: gitlab个人账户授权的`apitoken`,通过点击右上角【用户头像】->选择【settings】 ->菜单中选择【Access Tokens】，右侧 进行创建，建议给予全部权限
 
 ![apiToken1](png/apiToken1.png)
 ![apiToken2](png/apiToken2.png)

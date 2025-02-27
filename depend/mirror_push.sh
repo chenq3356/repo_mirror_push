@@ -24,13 +24,27 @@ if [[ "$current_branch" == *"HEAD"* ]]; then
 fi
 
 # 判断是否为浅克隆
-if [ -f "$LOCAL_REPO/.git/shallow" ]; then
+if [ -f "$project_path/.git/shallow" ]; then
     echo "The local repository is a shallow clone."
     echo "Converting to a full clone..."
 
-    # 转换为完整克隆
-    git fetch --unshallow
+	# 获取所有远程仓库的名称
+	remotes=$(git remote)
+	
+	# 遍历每个远程仓库并获取 URL
+	for remote_name in $remotes; do
+		# 转换为完整克隆
+		git fetch $remote_name --unshallow
+	
+		if [ ! -f "$project_path/.git/shallow" ]; then
+			echo "Converting to a full clone ok"
+			break
+		fi
+	done
 fi
+
+# 判断是否为浅克隆, 浅克隆不执行提交操作
+if [ ! -f "$project_path/.git/shallow" ]; then
 
 # 判断remote是否存在，如存在则使用set-url
 remote_name="newrevision"
@@ -43,4 +57,8 @@ fi
 
 # 提交仓库
 git push ${remote_name} ${current_branch}:${git_revision}
+
+else
+	echo "fatal: ${project_path} is shallow clone"
+fi
 
