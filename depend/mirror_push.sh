@@ -1,27 +1,26 @@
 #!/bin/bash
 
-if [ $# -ne 3 ]; then
-    echo "Usage: $0 <arg1> <arg2> <arg3>"
+if [ $# -ne 2 ]; then
+    echo "fatal: Usage: $0 <arg1> <arg2>"
     exit 1
 fi
 
 project_path=$1 # 本地仓库的完整路径
 git_url=$2		# 远程仓库地址
-git_revision=$3 # 分支名称
 
-# 判断本地仓库是否存在
-if [ ! -d $project_path ]; then
-    echo "fatal: ${project_path} does not exist."
-	exit 1
-fi
+
+# 进入本地仓库目录
+cd "$project_path" || { echo "fatal: Failed to enter local repository directory."; exit 1; }
 
 # 获取当前分支名称，当前分支不存在，则创建master分支
-cd $project_path
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 if [[ "$current_branch" == *"HEAD"* ]]; then
     current_branch=master
-	git checkout -b $current_branch
+	git checkout -b $current_branch || { echo "fatal: Failed to checkout to master."; exit 1; }
 fi
+
+# 确保本地仓库是最新的
+git fetch --all
 
 # 判断是否为浅克隆
 if [ -f "$project_path/.git/shallow" ]; then
@@ -50,13 +49,17 @@ if [ ! -f "$project_path/.git/shallow" ]; then
 remote_name="newrevision"
 remote_url=$(git config --get remote."$remote_name".url)
 if [ -z "$remote_url" ]; then
-	git remote add "$remote_name" "$git_url"
+	git remote add "$remote_name" "$git_url"  || { echo "fatal: Failed to add GitLab remote."; exit 1; }
 else
-	git remote set-url "$remote_name" "$git_url"
+	git remote set-url "$remote_name" "$git_url"  || { echo "fatal: Failed to set-url GitLab remote."; exit 1; }
 fi
 
-# 提交仓库
-git push ${remote_name} ${current_branch}:${git_revision}
+# 推送所有分支到新的 GitLab 仓库
+git push --all ${remote_name} || { echo "fatal: Failed to push branches to GitLab."; exit 1; }
+
+# 推送所有标签到新的 GitLab 仓库
+git push --tags ${remote_name} || { echo "fatal: Failed to push tags to GitLab."; exit 1; }
+
 
 else
 	echo "fatal: ${project_path} is shallow clone"

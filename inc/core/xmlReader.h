@@ -8,9 +8,9 @@
 
 struct ProjectInfo
 {
+    bool isFullPath;
     std::string name_; // git的名称，用于生成git url，URL格式是：${remote fetch}/${project name}.git
     std::string path_; // clone到本地的git的工作目录，如果没有配置的话，跟name一样
-    std::string revision_; // 指定需要获取的git提交点，可以定义成固定的branch，或者是明确的commit 哈希值
 };
 
 class XMLReader

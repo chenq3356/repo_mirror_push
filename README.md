@@ -8,16 +8,19 @@
 ```
 output
 └── bin
-    ├── mirror_push.sh
-    ├── repo_mirror_push
-    └── setting.ini
+    ├── mirror_push.sh
+    ├── repo_mirror_push
+    └── setting.ini
 
 ```
 # 3、配置 `setting.ini`
 ```
 [UploadInfo]
 upload=true                            	;是否执行仓库迁移
+commitAgain=false                       ;是否重复提交，否的话跳过已经提交过的仓库
 basePath=/home/img/code                 ;本地代码的路径
+manifestsPath=                          ;本地要提交的manifests仓库路径
+repoPath=                               ;本地要提交的repo仓库路径
 projectUrl=https://gitlab.example.com   ;目标gitlab地址,域名
 apiToken=your_access_token              ;目标gitlab授权的API个人访问令牌
 namespaceName=repotest                  ;远程仓库的根路径名称(无实际作用)

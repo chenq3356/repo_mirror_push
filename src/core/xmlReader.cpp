@@ -126,8 +126,6 @@ std::vector<ProjectInfo> XMLReader::getProjects()
     init();
 
     std::string remoteDef;
-    std::string revisionDef;
-
     for (auto iter = elements_.begin(); iter != elements_.end(); iter++) {
         tinyxml2::XMLElement* currenteleElement = *iter;
         std::string elementName = currenteleElement->Name();
@@ -135,11 +133,6 @@ std::vector<ProjectInfo> XMLReader::getProjects()
             const char* remoteAttr = currenteleElement->Attribute("remote");
             if (remoteAttr) {
                 remoteDef = remoteAttr;
-            }
-
-            const char* revisionAttr = currenteleElement->Attribute("revision");
-            if (revisionAttr) {
-                revisionDef = revisionAttr;
             }
             break;
         }
@@ -158,9 +151,9 @@ std::vector<ProjectInfo> XMLReader::getProjects()
 
             const char* pathAttr = currenteleElement->Attribute("path");
             const char* remoteAttr = currenteleElement->Attribute("remote");
-            const char* revisionAttr = currenteleElement->Attribute("revision");
 
             ProjectInfo info;
+            info.isFullPath = false;
             if (remoteAttr) {
                 info.name_ = std::string(remoteAttr) + std::string("/") + std::string(nameAttr);
             } else {
@@ -171,12 +164,6 @@ std::vector<ProjectInfo> XMLReader::getProjects()
                 info.path_ = std::string(pathAttr);
             } else {
                 info.path_ = std::string(nameAttr);
-            }
-
-            if (revisionAttr) {
-                info.revision_ = std::string(revisionAttr);
-            } else {
-                info.revision_ = revisionDef;
             }
             list.push_back(info);
         }

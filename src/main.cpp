@@ -4,11 +4,14 @@
 #include "utils.h"
 
 bool s_upload=false;          //是否上传代码
+bool s_commitAgain;             //是否重复提交，否的话跳过已经提交过的仓库
 std::string s_basePath;       //本地代码的路径
 std::string s_projectUrl;     //目标gitlab地址
 std::string s_apiToken;       //目标gitlab授权的API个人访问令牌
 std::string s_namespaceName;  //目标库名称
 int s_namespaceId;            //目标库分组id（将按源目录自动提交到此分组下）
+std::string s_manifestsPath;    //本地要提交的manifests仓库路径
+std::string s_repoPath;         //本地要提交的repo仓库路径
 
 std::string s_xmlOutFile;     //将指定的XML转换成单文件的形式，为空不输出
 std::string s_xmlBasePath;    //XML文件的路径
@@ -111,6 +114,29 @@ int generateAGroup(TreeNode* root, std::string path)
     return current->id_;
 }
 
+bool execPush(std::string path, std::string giturl)
+{
+    // 脚本路径和参数
+    printf("begin upload...\n");
+    std::string scriptPath = "./mirror_push.sh";    // 脚本路径
+    std::string arg1 = path;                    // 第一个参数: 本地路径
+    std::string arg2 = giturl;                  // 第二个参数: 远程URL
+
+    // 构建完整的命令
+    std::string command = scriptPath + " " + arg1 + " " + arg2;
+    try {
+        std::string result = utils::exec(command.c_str());
+        if (std::string::npos != result.find("error") || std::string::npos != result.find("fatal")) {
+            printf("%s\n", result.c_str());
+            return false;
+        }
+        return true;
+    } catch (const std::exception& e) {
+        printf("ERROR: %s\n", command.c_str());
+        return false;
+    }
+}
+
 bool pushAProject(int parent_id, ProjectInfo& info)
 {
     std::string projectName = utils::getFileName(info.name_);
@@ -127,35 +153,15 @@ bool pushAProject(int parent_id, ProjectInfo& info)
     }
 
     // 不为空，已经提交过了
-    if (!empty_repo) {
+    if (!s_commitAgain && !empty_repo) {
         return true;
     }
 
-    // 脚本路径和参数
-    printf("begin upload...\n");
-    std::string scriptPath = "./mirror_push.sh";    // 脚本路径
-    std::string arg1 = s_basePath + std::string("/") + info.path_; // 第一个参数: 本地路径
-    std::string arg2 = sshUrl;                  // 第二个参数: 远程URL
-    std::string arg3 = "master";                // 第三个参数: 分支名
-    size_t pos = info.revision_.find("refs/heads/");
-    if (pos != std::string::npos) {
-        arg3 = info.revision_.substr(pos+11);
+    if (info.isFullPath) {
+        return execPush(info.path_, sshUrl);
+    } else {
+        return execPush(s_basePath + std::string("/") + info.path_, sshUrl);
     }
-
-    // 构建完整的命令
-    std::string command = scriptPath + " " + arg1 + " " + arg2 + " " + arg3;
-    try {
-        std::string result = utils::exec(command.c_str());
-        if (std::string::npos != result.find("error") || std::string::npos != result.find("fatal")) {
-            printf("%s\n", result.c_str());
-            return false;
-        }
-        return true;
-    } catch (const std::exception& e) {
-        printf("ERROR: %s\n", command.c_str());
-        return false;
-    }
-    return false;
 }
 
 void repo_upload(XMLReader* reader)
@@ -165,6 +171,21 @@ void repo_upload(XMLReader* reader)
     gitlibApi::FLAGS_token  = s_apiToken;
 
     std::vector<ProjectInfo> uploadList = reader->getProjects();
+    if (!s_manifestsPath.empty()) {
+        ProjectInfo info;
+        info.isFullPath = true;
+        info.name_      = "manifests";
+        info.path_      = s_manifestsPath;
+        uploadList.push_back(info);
+    }
+    if (!s_repoPath.empty()) {
+        ProjectInfo info;
+        info.isFullPath = true;
+        info.name_      = "repo";
+        info.path_      = s_repoPath;
+        uploadList.push_back(info);
+    }
+
     int uploadSize = uploadList.size();
     TreeNode* root = new TreeNode(s_namespaceId, s_namespaceName);
     for (int i = 0; i < uploadSize; i++) {
