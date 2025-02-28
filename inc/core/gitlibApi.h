@@ -17,7 +17,9 @@ int getGroupId(int parent_id, std::string name);
 
 int createGroup(int parent_id, std::string name);
 
-std::string getProjectUrl(int parent_id, std::string name, bool* empty_repo = nullptr);
+bool isBranchExist(int project_id, std::string branch_name);
+
+std::string getProjectUrl(int parent_id, std::string name, bool* empty_repo = nullptr, int* project_id = nullptr);
 
 std::string createProject(int parent_id, std::string name);
 

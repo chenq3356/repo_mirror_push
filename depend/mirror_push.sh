@@ -1,13 +1,13 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]; then
-    echo "fatal: Usage: $0 <arg1> <arg2>"
+if [ $# -ne 3 ]; then
+    echo "fatal: Usage: $0 <arg1> <arg2> <arg3>"
     exit 1
 fi
 
 project_path=$1 # 本地仓库的完整路径
 git_url=$2		# 远程仓库地址
-
+git_branch=$3
 
 # 进入本地仓库目录
 cd "$project_path" || { echo "fatal: Failed to enter local repository directory."; exit 1; }
@@ -55,7 +55,8 @@ else
 fi
 
 # 推送所有分支到新的 GitLab 仓库
-git push --all ${remote_name} || { echo "fatal: Failed to push branches to GitLab."; exit 1; }
+git push ${remote_name} ${current_branch}:${git_branch} || { echo "fatal: Failed to push branches to GitLab."; exit 1; }
+# git push --all ${remote_name} || { echo "fatal: Failed to push branches to GitLab."; exit 1; }
 
 # 推送所有标签到新的 GitLab 仓库
 git push --tags ${remote_name} || { echo "fatal: Failed to push tags to GitLab."; exit 1; }

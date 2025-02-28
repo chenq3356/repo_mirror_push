@@ -1,4 +1,5 @@
 #include "xmlReader.h"
+#include <regex>
 #include <map>
 
 XMLReader::XMLReader(std::string basePath, std::string baseFile)
@@ -121,11 +122,83 @@ void XMLReader::saveAsXML(std::string fileName)
     doc.SaveFile(fileName.c_str());
 }
 
+bool XMLReader::isGitHash(const std::string& str) {
+    // 定义正则表达式：40 或 64 个十六进制字符
+    std::regex hashRegex("^[0-9a-fA-F]{40}$|^[0-9a-fA-F]{64}$");
+
+    // 使用正则表达式匹配
+    return std::regex_match(str, hashRegex);
+}
+
+bool XMLReader::isGitTag(const std::string& revision) {
+    // 定义正则表达式：匹配 Git 标签名称
+
+    // ^[a-zA-Z0-9]：标签名称以字母或数字开头
+    // [-_.]：必须包含至少一个特定符号(-_.)
+    // [a-zA-Z0-9-_.]*：可以包含零个或多个字母或数字或符号
+    // [a-zA-Z0-9]$：以字母或数字结尾
+    std::regex tagRegex("^[a-zA-Z0-9][a-zA-Z0-9]*[-_.][a-zA-Z0-9-_.]*[a-zA-Z0-9]$");
+
+    // 使用正则表达式匹配
+    return std::regex_match(revision, tagRegex);
+}
+
+std::string XMLReader::parseRevision(std::string revision)
+{
+    if (revision.empty()) {
+        return "master";
+    }
+    /*
+    * 1、指定一个分支名称，表示使用该分支的最新提交 revision="main"
+    * 2、指定提交的哈希 revision="a56e0e17e23f925ff44c75e5b89330ccc2598640"
+    * 3、标签名称 revision="v1.0.0"
+    * 4、相对引用 revision="HEAD~1"
+    * 5、默认值，如果 revision 字段未指定，则使用 manifest 文件中的默认值（通过 <default> 标签指定）,在XMLReader::getProjects 中已处理
+    * 6、明确指定标签 refs/tags/<tag>
+    * 7、明确指定分支 refs/heads/<branch>
+    * 8、用于 Gerrit 代码评审系统 refs/changes/<change>
+    */
+
+    // 相对引用
+    size_t pos = revision.find("HEAD~");
+    if (std::string::npos != pos && 0 == pos) {
+        return "master";
+    }
+
+    // 明确指定标签
+    pos = revision.find("refs/tags/");
+    if (std::string::npos != pos) {
+        return "master";
+    }
+    // 明确指定分支
+    pos = revision.find("refs/heads/");
+    if (std::string::npos != pos) {
+        return revision.substr(pos+11);
+    }
+    // 用于 Gerrit 代码评审系统
+    pos = revision.find("refs/changes/");
+    if (std::string::npos != pos) {
+        return "master";
+    }
+
+    // 哈希
+    if (isGitHash(revision)) {
+        return "master";
+    }
+    // 标签
+    if (isGitTag(revision)) {
+        return "master";
+    }
+
+    return revision;
+}
+
 std::vector<ProjectInfo> XMLReader::getProjects()
 {
     init();
 
     std::string remoteDef;
+    std::string revisionDef;
     for (auto iter = elements_.begin(); iter != elements_.end(); iter++) {
         tinyxml2::XMLElement* currenteleElement = *iter;
         std::string elementName = currenteleElement->Name();
@@ -133,6 +206,10 @@ std::vector<ProjectInfo> XMLReader::getProjects()
             const char* remoteAttr = currenteleElement->Attribute("remote");
             if (remoteAttr) {
                 remoteDef = remoteAttr;
+            }
+            const char* revisionAttr = currenteleElement->Attribute("revision");
+            if (revisionAttr) {
+                revisionDef = revisionAttr;
             }
             break;
         }
@@ -151,6 +228,7 @@ std::vector<ProjectInfo> XMLReader::getProjects()
 
             const char* pathAttr = currenteleElement->Attribute("path");
             const char* remoteAttr = currenteleElement->Attribute("remote");
+            const char* revisionAttr = currenteleElement->Attribute("revision");
 
             ProjectInfo info;
             info.isFullPath = false;
@@ -165,6 +243,15 @@ std::vector<ProjectInfo> XMLReader::getProjects()
             } else {
                 info.path_ = std::string(nameAttr);
             }
+
+            std::string revision;
+            if (revisionAttr) {
+                revision = std::string(revisionAttr);
+            } else {
+                revision = revisionDef;
+            }
+            info.branch_ = parseRevision(revision);
+
             list.push_back(info);
         }
     }

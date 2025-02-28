@@ -62,8 +62,43 @@ int createGroup(int id, std::string name)
     return utils::getJsonValueInt(resdata, "id", -1);
 }
 
-std::string getProjectUrl(int parent_id, std::string name, bool* empty_repo)
+bool isBranchExist(int project_id, std::string branch_name)
 {
+    if (project_id < 0) {
+        return false;
+    }
+
+    httplib::Headers header;
+    header.emplace("Private-Token", FLAGS_token);
+
+    std::string path = "/api/v4/projects/" + std::to_string(project_id) + "/repository/branches";
+
+    httplib::Client cli(FLAGS_host);
+    httplib::Result result = cli.Get(path, header);
+    const httplib::Response &resp = result.value();
+    utils::JsObj resdata = utils::string2Json(resp.body);
+    int size = utils::getJsonArraySize(resdata);
+    for (int i = 0; i < size; i++)
+    {
+        utils::JsObj jsitem = utils::getJsonArray(resdata, i);
+        std::string temp = utils::getJsonValueString(jsitem, "name", "");
+        if (0 == branch_name.compare(temp)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string getProjectUrl(int parent_id, std::string name, bool* empty_repo, int* project_id)
+{
+    if (empty_repo) {
+        *empty_repo = true;
+    }
+
+    if (project_id) {
+        *empty_repo = -1;
+    }
+
     httplib::Headers header;
     header.emplace("Private-Token", FLAGS_token);
 
@@ -86,6 +121,9 @@ std::string getProjectUrl(int parent_id, std::string name, bool* empty_repo)
         if (0 == name.compare(temp)) {
             if (empty_repo) {
                 *empty_repo = utils::getJsonValueBool(jsitem, "empty_repo", false);
+            }
+            if (project_id) {
+                *project_id = utils::getJsonValueInt(jsitem, "id", -1);
             }
             return utils::getJsonValueString(jsitem, "ssh_url_to_repo", "");
         }

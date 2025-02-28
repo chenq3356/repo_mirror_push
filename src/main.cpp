@@ -117,16 +117,17 @@ int generateAGroup(TreeNode* root, std::string path)
     return current->id_;
 }
 
-bool execPush(std::string path, std::string giturl)
+bool execPush(std::string path, std::string giturl, std::string branch)
 {
     // 脚本路径和参数
     printf("begin upload...\n");
     std::string scriptPath = "./mirror_push.sh";    // 脚本路径
     std::string arg1 = path;                    // 第一个参数: 本地路径
     std::string arg2 = giturl;                  // 第二个参数: 远程URL
+    std::string arg3 = branch; // 第三个参数: 远程分支名
 
     // 构建完整的命令
-    std::string command = scriptPath + " " + arg1 + " " + arg2;
+    std::string command = scriptPath + " " + arg1 + " " + arg2 + " " + arg3;
     try {
         std::string result = utils::exec(command.c_str());
         if (std::string::npos != result.find("error") || std::string::npos != result.find("fatal")) {
@@ -144,9 +145,19 @@ bool pushAProject(int parent_id, ProjectInfo& info)
 {
     std::string projectName = utils::getFileName(info.name_);
 
+    int project_id = -1;
     bool empty_repo = true;
-    std::string sshUrl = gitlibApi::getProjectUrl(parent_id, projectName, &empty_repo);
+    std::string sshUrl = gitlibApi::getProjectUrl(parent_id, projectName, &empty_repo, &project_id);
+    if (!empty_repo && project_id >= 0) {
+        if (gitlibApi::isBranchExist(project_id, info.branch_)) {
+            empty_repo = false;
+        } else {
+            empty_repo = true;
+        }
+    }
+
     if (sshUrl.empty()) {
+        empty_repo = true;
         sshUrl = gitlibApi::createProject(parent_id, projectName);
     }
 
@@ -161,9 +172,10 @@ bool pushAProject(int parent_id, ProjectInfo& info)
     }
 
     if (info.isFullPath) {
-        return execPush(info.path_, sshUrl);
+        return execPush(info.path_, sshUrl, info.branch_);
     } else {
-        return execPush(s_basePath + std::string("/") + info.path_, sshUrl);
+        std::string fullpath = s_basePath + std::string("/") + info.path_;
+        return execPush(fullpath, sshUrl, info.branch_);
     }
 }
 
@@ -179,6 +191,7 @@ void repo_upload(XMLReader* reader)
         info.isFullPath = true;
         info.name_      = "manifests";
         info.path_      = s_manifestsPath;
+        info.branch_    = "master";
         uploadList.push_back(info);
     }
     if (!s_repoPath.empty()) {
@@ -186,6 +199,7 @@ void repo_upload(XMLReader* reader)
         info.isFullPath = true;
         info.name_      = "repo";
         info.path_      = s_repoPath;
+        info.branch_    = "master";
         uploadList.push_back(info);
     }
 

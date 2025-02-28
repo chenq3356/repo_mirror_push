@@ -11,6 +11,7 @@ struct ProjectInfo
     bool isFullPath;
     std::string name_; // git的名称，用于生成git url，URL格式是：${remote fetch}/${project name}.git
     std::string path_; // clone到本地的git的工作目录，如果没有配置的话，跟name一样
+    std::string branch_; // 远程分支名
 };
 
 class XMLReader
@@ -34,6 +35,12 @@ private:
     void addXMLElement(tinyxml2::XMLElement* element);
 
     void removeXMLElement(std::string projectName);
+
+    bool isGitHash(const std::string& str);
+
+    bool isGitTag(const std::string& revision);
+
+    std::string parseRevision(std::string revision);
 
 private:
     bool bInit_;
