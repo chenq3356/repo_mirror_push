@@ -62,7 +62,9 @@ baseFile=xxx.xml                        ;预提交仓库的XML文件
 repotest
 ├── manifest
 ├── repo
-└── xxx
+├── remote1
+├── remote2
+└── remoten
 ```
 
 # 二、拉取代码
