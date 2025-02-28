@@ -47,7 +47,7 @@ baseFile=xxx.xml                        ;预提交仓库的XML文件
 
 ### 4、执行 `repo_mirror_push`
 
-支持重复执行该指令，已创建的远程仓库或者已经提交过的仓库均不会被重复执行
+支持重复执行该指令，已经提交过的仓库会根据`commitAgain`来决定是否重复执行
 ```
 ./repo_mirror_push
 ```
