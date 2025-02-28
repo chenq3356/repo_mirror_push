@@ -52,11 +52,7 @@ baseFile=xxx.xml                        ;预提交仓库的XML文件
 ./repo_mirror_push
 ```
 
-
-
-### 5、`repo`工具以及`manifest`仓库自行上传到远程库根路径下
-
-远程仓库目录结构如下：
+执行完成后，远程仓库目录结构如下：
 
 ```
 repotest
