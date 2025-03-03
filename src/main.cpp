@@ -226,6 +226,24 @@ void repo_upload(XMLReader* reader)
     delete root;
 }
 
+void revisionTest()
+{
+    std::vector<std::string> revisionList;
+    revisionList.push_back("main");
+    revisionList.push_back("a56e0e17e23f925ff44c75e5b89330ccc2598640");
+    revisionList.push_back("v1.0.0");
+    revisionList.push_back("1.0.0");
+    revisionList.push_back("HEAD~1");
+    revisionList.push_back("refs/heads/master");
+    revisionList.push_back("refs/tags/tag");
+    revisionList.push_back("refs/changes/changes");
+
+    for (auto revision : revisionList)
+    {
+        XMLReader::parseRevision(revision, true);
+    }
+}
+
 int main() {
     if (!parseParameter()) {
         printf ("parseParameter error!\n");
@@ -236,6 +254,8 @@ int main() {
         printf ("checkParameter error!\n");
         exit(0);
     }
+
+    //revisionTest();
 
     XMLReader reader(s_xmlBasePath, s_xmlBaseFile);
 

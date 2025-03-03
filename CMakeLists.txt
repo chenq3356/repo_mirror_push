@@ -1,26 +1,15 @@
 # 显示详细过程： make VERBOSE=on make VERBOSE=1 make V=1
 
 #指定使用该CMakeList.txt文件需要的cmake最低版本
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
-# for gdb -g
-#set(CMAKE_BUILD_TYPE "Debug")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11 -ggdb3 -g3 ")
-
-
-set(CMAKE_CXX_STANDARD 17)
-
-#find_package(PkgConfig)
-#include(GNUInstallDirs)
-
-
-set(CMAKE_VERBOSE_MAKEFILE 2)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 #指定项目信息
 project(repo_mirror_push)
 set(TARGET_NAME ${CMAKE_PROJECT_NAME})
-
-
 
 # include and source
 include_directories(inc/base)    #头文件路径

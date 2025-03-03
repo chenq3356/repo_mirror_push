@@ -1,5 +1,5 @@
 #include "xmlReader.h"
-#include <regex>
+//#include <regex>
 #include <map>
 
 XMLReader::XMLReader(std::string basePath, std::string baseFile)
@@ -122,15 +122,31 @@ void XMLReader::saveAsXML(std::string fileName)
     doc.SaveFile(fileName.c_str());
 }
 
-bool XMLReader::isGitHash(const std::string& str) {
+bool XMLReader::isGitHash(const std::string& revision) {
+#if 0
     // 定义正则表达式：40 或 64 个十六进制字符
     std::regex hashRegex("^[0-9a-fA-F]{40}$|^[0-9a-fA-F]{64}$");
 
     // 使用正则表达式匹配
     return std::regex_match(str, hashRegex);
+#else
+    // Git 对象哈希值是 40 个字符的十六进制字符串
+    if (revision.length() != 40) {
+        return false;
+    }
+
+    // 检查每个字符是否是十六进制字符
+    for (char c : revision) {
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+            return false;
+        }
+    }
+    return true;
+#endif
 }
 
 bool XMLReader::isGitTag(const std::string& revision) {
+#if 0
     // 定义正则表达式：匹配 Git 标签名称
 
     // ^[a-zA-Z0-9]：标签名称以字母或数字开头
@@ -141,11 +157,20 @@ bool XMLReader::isGitTag(const std::string& revision) {
 
     // 使用正则表达式匹配
     return std::regex_match(revision, tagRegex);
+#else
+    if (std::string::npos != revision.find(".")) {
+        return true;
+    }
+    return false;
+#endif
 }
 
-std::string XMLReader::parseRevision(std::string revision)
+std::string XMLReader::parseRevision(std::string revision, bool debug)
 {
     if (revision.empty()) {
+        if (debug) {
+            printf("revision is empty\n");
+        }
         return "master";
     }
     /*
@@ -162,32 +187,54 @@ std::string XMLReader::parseRevision(std::string revision)
     // 相对引用
     size_t pos = revision.find("HEAD~");
     if (std::string::npos != pos && 0 == pos) {
+        if (debug) {
+            printf("%s is HEAD~\n", revision.c_str());
+        }
         return "master";
     }
 
     // 明确指定标签
     pos = revision.find("refs/tags/");
     if (std::string::npos != pos) {
+        if (debug) {
+            printf("%s is refs/tags\n", revision.c_str());
+        }
         return "master";
     }
     // 明确指定分支
     pos = revision.find("refs/heads/");
     if (std::string::npos != pos) {
+        if (debug) {
+            printf("%s is refs/heads\n", revision.c_str());
+        }
         return revision.substr(pos+11);
     }
     // 用于 Gerrit 代码评审系统
     pos = revision.find("refs/changes/");
     if (std::string::npos != pos) {
+        if (debug) {
+            printf("%s is refs/changes\n", revision.c_str());
+        }
         return "master";
     }
 
     // 哈希
     if (isGitHash(revision)) {
+        if (debug) {
+            printf("%s is hash\n", revision.c_str());
+        }
         return "master";
     }
     // 标签
     if (isGitTag(revision)) {
+        if (debug) {
+            printf("%s is tag\n", revision.c_str());
+        }
         return "master";
+    }
+
+    if (debug) {
+        printf("%s is branch name\n", revision.c_str());
     }
 
     return revision;
