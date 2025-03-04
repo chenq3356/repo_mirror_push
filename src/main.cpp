@@ -3,13 +3,14 @@
 #include "gitlibApi.h"
 #include "utils.h"
 
-bool s_upload=false;          //是否上传代码
-bool s_commitAgain;             //是否重复提交，否的话跳过已经提交过的仓库
-std::string s_basePath;       //本地代码的路径
-std::string s_projectUrl;     //目标gitlab地址
-std::string s_apiToken;       //目标gitlab授权的API个人访问令牌
-std::string s_namespaceName;  //目标库名称
-int s_namespaceId;            //目标库分组id（将按源目录自动提交到此分组下）
+bool s_lossRemote   = false;    // 旧的远程是否已丢失
+bool s_upload       = false;    //是否上传代码
+bool s_commitAgain  = false;    //是否重复提交，否的话跳过已经提交过的仓库
+std::string s_basePath;         //本地代码的路径
+std::string s_projectUrl;       //目标gitlab地址
+std::string s_apiToken;         //目标gitlab授权的API个人访问令牌
+std::string s_namespaceName;    //目标库名称
+int s_namespaceId   = -1;       //目标库分组id（将按源目录自动提交到此分组下）
 std::string s_manifestsPath;    //本地要提交的manifests仓库路径
 std::string s_repoPath;         //本地要提交的repo仓库路径
 
@@ -39,6 +40,7 @@ bool parseParameter()
         return false;
     }
     s_upload        = reader.GetBoolean("UploadInfo", "upload", false);
+    s_lossRemote    = reader.GetBoolean("UploadInfo", "lossRemote", false);
     s_commitAgain   = reader.GetBoolean("UploadInfo", "commitAgain", false);
     s_basePath      = reader.GetString("UploadInfo", "basePath", "");
     s_manifestsPath = reader.GetString("UploadInfo", "manifestsPath", "");
@@ -106,6 +108,7 @@ int generateAGroup(TreeNode* root, std::string path)
 
             // 取不到group id，返回负数
             if (id < 0) {
+                printf("get group id error\n");
                 return -1;
             }
 
@@ -125,13 +128,14 @@ bool execPush(std::string path, std::string giturl, std::string branch)
     std::string arg1 = path;                    // 第一个参数: 本地路径
     std::string arg2 = giturl;                  // 第二个参数: 远程URL
     std::string arg3 = branch; // 第三个参数: 远程分支名
+    std::string arg4 = s_lossRemote ? "true" : "false";
 
     // 构建完整的命令
-    std::string command = scriptPath + " " + arg1 + " " + arg2 + " " + arg3;
+    std::string command = scriptPath + " " + arg1 + " " + arg2 + " " + arg3 + " " + arg4;
     try {
         std::string result = utils::exec(command.c_str());
         if (std::string::npos != result.find("error") || std::string::npos != result.find("fatal")) {
-            printf("%s\n", result.c_str());
+            printf("ERROR: %s\n", result.c_str());
             return false;
         }
         return true;
@@ -163,6 +167,7 @@ bool pushAProject(int parent_id, ProjectInfo& info)
 
     // 取不到远程地址，返回失败
     if (sshUrl.empty()) {
+        printf("get ssh url error\n");
         return false;
     }
 
@@ -264,7 +269,7 @@ int main() {
     }
 
     if (!s_xmlOutFile.empty()) {
-        reader.saveAsXML(s_xmlOutFile);
+        reader.saveAsXML(s_xmlOutFile, s_lossRemote);
     }
     return 0;
 }

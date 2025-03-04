@@ -66,10 +66,6 @@ void XMLReader::addXMLElement(tinyxml2::XMLElement* element)
 
     tinyxml2::XMLElement* copyElement = copyNode->ToElement();
     if (copyElement) {
-        std::string elementName = copyElement->Name();
-        if ("remote" == elementName) {
-            copyElement->SetAttribute("fetch", copyElement->Attribute("name"));
-        }
         elements_.push_back(copyElement);
     }
 }
@@ -97,7 +93,7 @@ void XMLReader::removeXMLElement(std::string projectName)
 }
 
 // repo manifest -m xxx.xml -o xxx.xml
-void XMLReader::saveAsXML(std::string fileName)
+void XMLReader::saveAsXML(std::string fileName, bool lossRemote)
 {
     init();
 
@@ -111,11 +107,31 @@ void XMLReader::saveAsXML(std::string fileName)
     doc.InsertEndChild(root);
 
     for (auto iter = elements_.begin(); iter != elements_.end(); iter++) {
-        std::string elementName = (*iter)->Name();
-
         // 拷贝子元素并添加到根元素中
-        tinyxml2::XMLNode *copyNode = (*iter)->DeepClone(&doc);
-        root->InsertEndChild(copyNode);
+        tinyxml2::XMLElement* element = *iter;
+        std::string elementName = element->Name();
+        if ("remote" == elementName) {
+            tinyxml2::XMLNode *copyNode = element->DeepClone(&doc);
+            tinyxml2::XMLElement* copyElement = copyNode->ToElement();
+            copyElement->SetAttribute("fetch", copyElement->Attribute("name"));
+            root->InsertEndChild(copyElement);
+        } else if (lossRemote && "project" == elementName && element->Attribute("clone-depth")) {
+            tinyxml2::XMLElement* copyElement = doc.NewElement(elementName.c_str());
+            if (element->Attribute("groups")) {
+                copyElement->SetAttribute("groups", element->Attribute("groups"));
+            }
+            if (element->Attribute("name")) {
+                copyElement->SetAttribute("name", element->Attribute("name"));
+            }
+            if (element->Attribute("path")) {
+                copyElement->SetAttribute("path", element->Attribute("path"));
+            }
+            copyElement->SetAttribute("revision", "refs/heads/master");
+            root->InsertEndChild(copyElement);
+        } else {
+            tinyxml2::XMLNode *copyNode = element->DeepClone(&doc);
+            root->InsertEndChild(copyNode);
+        }
     }
 
     // 保存XML文档到文件

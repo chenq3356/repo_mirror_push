@@ -23,7 +23,7 @@ public:
 
     // 将目标XML归并于一个文件
     // 相当于执行 repo manifest -m xxx.xml -o xxx.xml
-    void saveAsXML(std::string fileName);
+    void saveAsXML(std::string fileName, bool lossRemote = false);
 
     static std::string parseRevision(std::string revision, bool debug = false);
 
