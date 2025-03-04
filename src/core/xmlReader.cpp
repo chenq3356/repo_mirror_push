@@ -181,24 +181,33 @@ bool XMLReader::isGitTag(const std::string& revision) {
 #endif
 }
 
-std::string XMLReader::parseRevision(std::string revision, bool debug)
+/*
+* 1、指定一个分支名称，表示使用该分支的最新提交 revision="main"
+* 2、指定提交的哈希 revision="a56e0e17e23f925ff44c75e5b89330ccc2598640"
+* 3、标签名称 revision="v1.0.0"
+* 4、相对引用 revision="HEAD~1"
+* 5、默认值，如果 revision 字段未指定，则使用 manifest 文件中的默认值（通过 <default> 标签指定）,在XMLReader::getProjects 中已处理
+* 6、明确指定标签 refs/tags/<tag>
+* 7、明确指定分支 refs/heads/<branch>
+* 8、用于 Gerrit 代码评审系统 refs/changes/<change>
+*/
+std::string XMLReader::getBranchName(std::string revision)
+{
+    size_t pos = revision.find("refs/heads/");
+    if (std::string::npos != pos) {
+        return revision.substr(pos+11);
+    }
+    return revision;
+}
+
+bool XMLReader::isBranchName(std::string revision, bool debug)
 {
     if (revision.empty()) {
         if (debug) {
             printf("revision is empty\n");
         }
-        return "master";
+        return false;
     }
-    /*
-    * 1、指定一个分支名称，表示使用该分支的最新提交 revision="main"
-    * 2、指定提交的哈希 revision="a56e0e17e23f925ff44c75e5b89330ccc2598640"
-    * 3、标签名称 revision="v1.0.0"
-    * 4、相对引用 revision="HEAD~1"
-    * 5、默认值，如果 revision 字段未指定，则使用 manifest 文件中的默认值（通过 <default> 标签指定）,在XMLReader::getProjects 中已处理
-    * 6、明确指定标签 refs/tags/<tag>
-    * 7、明确指定分支 refs/heads/<branch>
-    * 8、用于 Gerrit 代码评审系统 refs/changes/<change>
-    */
 
     // 相对引用
     size_t pos = revision.find("HEAD~");
@@ -206,7 +215,7 @@ std::string XMLReader::parseRevision(std::string revision, bool debug)
         if (debug) {
             printf("%s is HEAD~\n", revision.c_str());
         }
-        return "master";
+        return false;
     }
 
     // 明确指定标签
@@ -215,7 +224,7 @@ std::string XMLReader::parseRevision(std::string revision, bool debug)
         if (debug) {
             printf("%s is refs/tags\n", revision.c_str());
         }
-        return "master";
+        return false;
     }
     // 明确指定分支
     pos = revision.find("refs/heads/");
@@ -223,7 +232,7 @@ std::string XMLReader::parseRevision(std::string revision, bool debug)
         if (debug) {
             printf("%s is refs/heads\n", revision.c_str());
         }
-        return revision.substr(pos+11);
+        return true;
     }
     // 用于 Gerrit 代码评审系统
     pos = revision.find("refs/changes/");
@@ -231,7 +240,7 @@ std::string XMLReader::parseRevision(std::string revision, bool debug)
         if (debug) {
             printf("%s is refs/changes\n", revision.c_str());
         }
-        return "master";
+        return false;
     }
 
     // 哈希
@@ -239,21 +248,33 @@ std::string XMLReader::parseRevision(std::string revision, bool debug)
         if (debug) {
             printf("%s is hash\n", revision.c_str());
         }
-        return "master";
+        return false;
     }
     // 标签
     if (isGitTag(revision)) {
         if (debug) {
             printf("%s is tag\n", revision.c_str());
         }
-        return "master";
+        return false;
     }
 
     if (debug) {
         printf("%s is branch name\n", revision.c_str());
     }
 
-    return revision;
+    return true;
+}
+
+std::string XMLReader::parseBranchName(std::string revision, std::string upstream)
+{
+    if (isBranchName(revision)) {
+        return getBranchName(revision);
+    }
+
+    if (isBranchName(upstream)) {
+        return getBranchName(upstream);
+    }
+    return "master";
 }
 
 std::vector<ProjectInfo> XMLReader::getProjects()
@@ -292,6 +313,7 @@ std::vector<ProjectInfo> XMLReader::getProjects()
             const char* pathAttr = currenteleElement->Attribute("path");
             const char* remoteAttr = currenteleElement->Attribute("remote");
             const char* revisionAttr = currenteleElement->Attribute("revision");
+            const char* upstreamAttr = currenteleElement->Attribute("upstream");
 
             ProjectInfo info;
             info.isFullPath = false;
@@ -313,7 +335,10 @@ std::vector<ProjectInfo> XMLReader::getProjects()
             } else {
                 revision = revisionDef;
             }
-            info.branch_ = parseRevision(revision);
+            if (upstreamAttr)
+                info.branch_ = parseBranchName(revision, std::string(upstreamAttr));
+            else
+                info.branch_ = parseBranchName(revision, "");
 
             list.push_back(info);
         }

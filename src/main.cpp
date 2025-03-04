@@ -245,7 +245,7 @@ void revisionTest()
 
     for (auto revision : revisionList)
     {
-        XMLReader::parseRevision(revision, true);
+        XMLReader::isBranchName(revision, true);
     }
 }
 

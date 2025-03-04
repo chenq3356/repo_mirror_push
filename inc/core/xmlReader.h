@@ -25,7 +25,7 @@ public:
     // 相当于执行 repo manifest -m xxx.xml -o xxx.xml
     void saveAsXML(std::string fileName, bool lossRemote = false);
 
-    static std::string parseRevision(std::string revision, bool debug = false);
+    static bool isBranchName(std::string revision, bool debug = false);
 
 private:
     // 如果一个project属于notdefault组，则，repo sync时不会下载
@@ -41,6 +41,10 @@ private:
     static bool isGitHash(const std::string& revision);
 
     static bool isGitTag(const std::string& revision);
+
+    std::string getBranchName(std::string revision);
+
+    std::string parseBranchName(std::string revision, std::string upstream);
 
 private:
     bool bInit_;
