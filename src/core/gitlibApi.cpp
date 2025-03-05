@@ -1,30 +1,28 @@
 #include "gitlibApi.h"
-#include "httplib.h"
+#include "httpclient.h"
 #include "utils.h"
-
 namespace gitlibApi
 {
 
 std::string FLAGS_host = "https://gitlab.example.com";
 std::string FLAGS_token = "";
 
-
 //curl --header "Private-Token: <your_access_token>" "gitlab.example.com/api/v4/groups?id=<id>&search=<name>
 int getGroupId(int parent_id, std::string name)
 {
-    httplib::Headers header;
-    header.emplace("Private-Token", FLAGS_token);
+    http::Headers headers;
+    headers.emplace("Private-Token", FLAGS_token);
 
     std::string path = "/api/v4/groups?id="+std::to_string(parent_id) +"&search=" + name;
+    std::string url = FLAGS_host + path;
 
-    httplib::Client cli(FLAGS_host);
-    httplib::Result result = cli.Get(path, header);
-    if (httplib::Error::Success != result.error()) {
-        printf("%s http get error(%d)\n", __FUNCTION__, (int)result.error());
+    http::Result result = http::Get(url, headers);
+    if (CURLcode::CURLE_OK != result.code_) {
+        printf("%s http get error(%d)\n", __FUNCTION__, (int)result.code_);
         return -2;
     }
-    const httplib::Response &resp = result.value();
-    utils::JsObj resdata = utils::string2Json(resp.body);
+
+    utils::JsObj resdata = utils::string2Json(result.body_);
     int size = utils::getJsonArraySize(resdata);
     for (int i = 0; i < size; i++)
     {
@@ -45,20 +43,19 @@ int createGroup(int id, std::string name)
     reqdata["path"] = name;
     reqdata["parent_id"] = id;
 
-    httplib::Headers header;
-    header.emplace("Private-Token", FLAGS_token);
+    http::Headers headers;
+    headers.emplace("Private-Token", FLAGS_token);
 
     std::string path = "/api/v4/groups";
+    std::string url = FLAGS_host + path;
 
-    httplib::Client cli(FLAGS_host);
-    httplib::Result result = cli.Post(path, header, reqdata.dump(), "application/json");
-    if (httplib::Error::Success != result.error()) {
-        printf("%s http get error(%d)\n", __FUNCTION__, (int)result.error());
+    http::Result result = http::Post(url, reqdata.dump(), headers, "application/json");
+    if (CURLcode::CURLE_OK != result.code_) {
+        printf("%s http post error(%d)\n", __FUNCTION__, (int)result.code_);
         return -2;
     }
 
-    const httplib::Response &resp = result.value();
-    utils::JsObj resdata = utils::string2Json(resp.body);
+    utils::JsObj resdata = utils::string2Json(result.body_);
     return utils::getJsonValueInt(resdata, "id", -1);
 }
 
@@ -68,15 +65,19 @@ bool isBranchExist(int project_id, std::string branch_name)
         return false;
     }
 
-    httplib::Headers header;
-    header.emplace("Private-Token", FLAGS_token);
+    http::Headers headers;
+    headers.emplace("Private-Token", FLAGS_token);
 
     std::string path = "/api/v4/projects/" + std::to_string(project_id) + "/repository/branches";
+    std::string url = FLAGS_host + path;
 
-    httplib::Client cli(FLAGS_host);
-    httplib::Result result = cli.Get(path, header);
-    const httplib::Response &resp = result.value();
-    utils::JsObj resdata = utils::string2Json(resp.body);
+    http::Result result = http::Get(url, headers);
+    if (CURLcode::CURLE_OK != result.code_) {
+        printf("%s http get error(%d)\n", __FUNCTION__, (int)result.code_);
+        return -2;
+    }
+
+    utils::JsObj resdata = utils::string2Json(result.body_);
     int size = utils::getJsonArraySize(resdata);
     for (int i = 0; i < size; i++)
     {
@@ -99,20 +100,19 @@ std::string getProjectUrl(int parent_id, std::string name, bool* empty_repo, int
         *empty_repo = -1;
     }
 
-    httplib::Headers header;
-    header.emplace("Private-Token", FLAGS_token);
+    http::Headers headers;
+    headers.emplace("Private-Token", FLAGS_token);
 
     std::string path = "/api/v4/groups/" + std::to_string(parent_id) + "/projects?search=" + name;
+    std::string url = FLAGS_host + path;
 
-    httplib::Client cli(FLAGS_host);
-    httplib::Result result = cli.Get(path, header);
-    if (httplib::Error::Success != result.error()) {
-        printf("%s http get error(%d)\n", __FUNCTION__, (int)result.error());
+    http::Result result = http::Get(url, headers);
+    if (CURLcode::CURLE_OK != result.code_) {
+        printf("%s http get error(%d)\n", __FUNCTION__, (int)result.code_);
         return "";
     }
 
-    const httplib::Response &resp = result.value();
-    utils::JsObj resdata = utils::string2Json(resp.body);
+    utils::JsObj resdata = utils::string2Json(result.body_);
     int size = utils::getJsonArraySize(resdata);
     for (int i = 0; i < size; i++)
     {
@@ -143,21 +143,19 @@ std::string createProject(int parent_id, std::string name)
     reqdata["public_jobs"] = false;
     reqdata["initialize_with_readme"] = false;
 
-    httplib::Headers header;
-    header.emplace("Private-Token", FLAGS_token);
+    http::Headers headers;
+    headers.emplace("Private-Token", FLAGS_token);
 
     std::string path = "/api/v4/projects";
+    std::string url = FLAGS_host + path;
 
-    httplib::Client cli(FLAGS_host);
-    httplib::Result result = cli.Post(path, header, reqdata.dump(), "application/json");
-    if (httplib::Error::Success != result.error()) {
-        printf("%s http get error(%d)\n", __FUNCTION__, (int)result.error());
+    http::Result result = http::Post(url, reqdata.dump(), headers, "application/json");
+    if (CURLcode::CURLE_OK != result.code_) {
+        printf("%s http post error(%d)\n", __FUNCTION__, (int)result.code_);
         return "";
     }
 
-    const httplib::Response &resp = result.value();
-    utils::JsObj resdata = utils::string2Json(resp.body);
-
+    utils::JsObj resdata = utils::string2Json(result.body_);
     return utils::getJsonValueString(resdata, "ssh_url_to_repo", "");
 }
 

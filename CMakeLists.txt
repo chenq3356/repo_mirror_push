@@ -28,6 +28,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s -Wno-unused-command-l
 #指定生成目标
 add_executable(${TARGET_NAME} ${ALL_SRCS})
 
-target_link_libraries(${TARGET_NAME})
+target_link_libraries(${TARGET_NAME} curl)
 
 
