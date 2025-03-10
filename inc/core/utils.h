@@ -18,6 +18,7 @@ namespace utils {
     std::string getJsonValueString(JsObj &json, const std::string &key, std::string defVal = "");
 
     std::string getFileName(const std::string& path);
+    std::string getFilePath(const std::string& path);
     std::vector<std::string> splitPath(const std::string& path, char delimiter = '/');
 
     std::string exec(const char* cmd);

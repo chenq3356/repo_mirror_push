@@ -96,7 +96,7 @@ std::string getProjectUrl(int parent_id, std::string name, bool* empty_repo, int
     }
 
     if (project_id) {
-        *empty_repo = -1;
+        *project_id = -1;
     }
 
     httplib::Headers header;
@@ -160,5 +160,4 @@ std::string createProject(int parent_id, std::string name)
 
     return utils::getJsonValueString(resdata, "ssh_url_to_repo", "");
 }
-
 }

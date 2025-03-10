@@ -103,6 +103,13 @@ std::string getFileName(const std::string& path) {
     return (lastSlash != std::string::npos) ? path.substr(lastSlash + 1) : path;
 }
 
+std::string getFilePath(const std::string& path) {
+    // 查找最后一个路径分隔符
+    size_t lastSlash = path.find_last_of("/\\");
+
+    // 如果找到分隔符，返回分隔符后的部分；否则返回整个路径
+    return (lastSlash != std::string::npos) ? path.substr(0, lastSlash) : path;
+}
 
 /*
 // 分割路径
