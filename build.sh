@@ -38,6 +38,7 @@ cd bin
 cp ../build/repo_mirror_push .
 cp ../../depend/git_pull.sh .
 cp ../../depend/git_push.sh .
+cp ../../depend/git_status.sh .
 cp ../../depend/mirror_pull.sh .
 cp ../../depend/mirror_push.sh .
 FILE="setting.ini"  
@@ -46,7 +47,8 @@ if [ ! -f "$FILE" ]; then
 fi
 
 chmod +x repo_mirror_push
-chmod +x git_pull.sh .
-chmod +x git_push.sh .
-chmod +x mirror_pull.sh .
-chmod +x mirror_push.sh .
+chmod +x git_pull.sh
+chmod +x git_push.sh
+chmod +x git_status.sh
+chmod +x mirror_pull.sh
+chmod +x mirror_push.sh

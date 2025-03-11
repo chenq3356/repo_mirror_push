@@ -15,24 +15,36 @@ output
 ```
 # 3、配置 `setting.ini`
 ```
-[UploadInfo]
-upload=true                            	;是否执行仓库迁移
-commitAgain=false                       ;是否重复提交，否的话跳过已经提交过的仓库
-basePath=/home/img/code                 ;本地代码的路径
-manifestsPath=/home/img/code/.repo/manifests    ;本地要提交的manifests仓库路径
-repoPath=/home/img/code/.repo/repo      ;本地要提交的repo仓库路径
-projectUrl=https://gitlab.example.com   ;目标gitlab地址,域名
-apiToken=your_access_token              ;目标gitlab授权的API个人访问令牌
-namespaceName=repotest                  ;远程仓库的根路径名称(无实际作用)
-namespaceId=1635                        ;远程仓库的根路径id（仓库源码将提交到该路径下）
+# 根据repo的XML文件拉取代码到本地，依赖于XMLConfig配置,XML->remote->fetch 需要填写完整的路径
+[RepoDownload]
+enable=false                    ;是否执行
+mirror=false                    ;是否以镜像的方式下载
+projectsPath=/demo              ;下载后存放的本地根路径
 
-[XMLInfo]
-outFile=example.xml                     ;将指定的XML以单文件的形式输出
-basePath=/demo                          ;XML文件的路径
-baseFile=xxx.xml                        ;预提交仓库的XML文件
+# 根据repo的XML文件上传代码到服务，依赖于XMLConfig配置
+[RepoUpload]
+enable=false                    ;是否执行
+mirror=false                    ;是否以镜像的方式提交，本地的源码也需要是镜像拉取
+repeate=false                   ;允许重复提交操作
+to_unshallow=false              ;是否将浅克隆转为完整克隆，否的话则重新创建git
+projectsPath=/demo              ;本地代码的根路径
+targetHost=https://gitlab.example.com ;目标gitlab地址,域名
+targetToken=your_access_token     ;目标gitlab授权的API个人访问令牌
+targetGroupId=0                   ;目标远程仓库的根路径的id
+
+# 根据repo的XML文件查看Hash,Changed，依赖于XMLConfig配置
+[RepoStatus]
+enable=false                    ;是否执行
+projectsPath=/demo              ;本地代码的根路径
+
+# REPO仓库的XML文件
+[XMLConfig]
+outFile=example.xml             ;将指定的XML以单文件的形式输出
+basePath=/demo                  ;XML文件的路径
+baseFile=xxx.xml                ;预提交仓库的XML文件
 ```
 
-> `commitAgain`: 如果 `true`，即使远程分支已存在也会重复执行`git push`操作(如果远程仓库没有新的提交，重复执行`git push`通常不会有问题)； 如果`false`，远程分支已存在时跳过`git push`操作。
+> `repeate`: 如果 `true`，即使远程分支已存在也会重复执行`git push`操作(如果远程仓库没有新的提交，重复执行`git push`通常不会有问题)； 如果`false`，远程分支已存在时跳过`git push`操作。
 
 > `XMLInfo.baseFile`: 预提交仓库的XML文件推荐使用命令`.repo/repo/repo manifest -m xxx.xml -o xxx.xml`生成的文件，而不是直接使用manifests下的文件。
 

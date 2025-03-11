@@ -31,6 +31,17 @@ bool getRepoUploadConfig(RepoUploadCfg& cfg) {
     return true;
 }
 
+bool getRepoStatusConfig(RepoStatusCfg& cfg)
+{
+    INIReader reader("setting.ini");
+    if (reader.ParseError() < 0) {
+        return false;
+    }
+    cfg.enable_         = reader.GetBoolean("RepoStatus", "enable", false);
+    cfg.projectsPath_   = reader.GetString("RepoStatus", "projectsPath", "");
+    return true;
+}
+
 bool getXMLConfig(xmlCfg &cfg) {
     INIReader reader("setting.ini");
     if (reader.ParseError() < 0) {

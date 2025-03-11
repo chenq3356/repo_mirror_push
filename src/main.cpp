@@ -1,5 +1,6 @@
 #include "repo_upload.h"
 #include "repo_download.h"
+#include "repo_status.h"
 #include "config.h"
 
 static config::xmlCfg sxmlCfg;
@@ -31,6 +32,7 @@ int main() {
 
     repo::download::repo_download(&reader);
     repo::upload::repo_upload(&reader);
+    repo::status::repo_status(&reader);
 
     if (!sxmlCfg.outFile_.empty()) {
         reader.saveAsXML(sxmlCfg.outFile_);

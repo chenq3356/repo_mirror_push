@@ -22,6 +22,11 @@ struct RepoUploadCfg{
     int targetGroupId_;         // 目标远程仓库的根路径的id
 };
 
+struct RepoStatusCfg{
+    bool enable_;                   // 是否执行
+    std::string projectsPath_;      // 本地代码的根路径
+};
+
 struct xmlCfg{
     std::string outFile_;
     std::string basePath_;
@@ -30,6 +35,7 @@ struct xmlCfg{
 
 bool getRepoDownloadConfig(RepoDownloadCfg &cfg);
 bool getRepoUploadConfig(RepoUploadCfg& cfg);
+bool getRepoStatusConfig(RepoStatusCfg& cfg);
 bool getXMLConfig(xmlCfg &cfg);
 
 } // namespace config
