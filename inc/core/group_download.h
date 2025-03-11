@@ -1,0 +1,4 @@
+#ifndef GROUP_DOWNLOAD_H
+#define GROUP_DOWNLOAD_H
+
+#endif // GROUP_DOWNLOAD_H
